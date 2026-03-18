@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+from pathlib import Path
 import subprocess
 import tempfile
 import tomllib
@@ -32,6 +33,8 @@ from station.runtime import (
     parse_env_file,
 )
 from station.shell import StationShell
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 class GeoIPParsingTests(unittest.TestCase):
@@ -93,7 +96,7 @@ class RuntimeTests(unittest.TestCase):
         self.assertEqual(capability.reason, "supported")
 
     def test_package_version_matches_runtime_version(self) -> None:
-        with open("/home/rangatira/IP/pyproject.toml", "rb") as handle:
+        with open(REPO_ROOT / "pyproject.toml", "rb") as handle:
             payload = tomllib.load(handle)
 
         self.assertEqual(payload["project"]["version"], __version__)
