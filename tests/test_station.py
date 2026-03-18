@@ -107,21 +107,23 @@ class RuntimeTests(unittest.TestCase):
         self.assertEqual(shell.ui_capability.reason, "prompt_toolkit_unavailable")
 
     def test_probe_terminal_handles_tput_failure(self) -> None:
-        with mock.patch("sys.stdout.isatty", return_value=True):
-            with mock.patch("station.diagnostics.shutil.which", return_value="/usr/bin/tput"):
-                with mock.patch("station.diagnostics.subprocess.run", side_effect=OSError("boom")):
-                    result = probe_terminal()
+        with mock.patch.dict("os.environ", {}, clear=True):
+            with mock.patch("sys.stdout.isatty", return_value=True):
+                with mock.patch("station.diagnostics.shutil.which", return_value="/usr/bin/tput"):
+                    with mock.patch("station.diagnostics.subprocess.run", side_effect=OSError("boom")):
+                        result = probe_terminal()
 
         self.assertFalse(result.ok)
         self.assertIn("no-color", result.detail)
 
     def test_get_local_interfaces_handles_subprocess_timeout(self) -> None:
-        with mock.patch("station.diagnostics.shutil.which", return_value="/usr/sbin/ip"):
-            with mock.patch(
-                "station.diagnostics.subprocess.run",
-                side_effect=subprocess.TimeoutExpired(cmd=["ip"], timeout=2),
-            ):
-                self.assertEqual(get_local_interfaces(), [])
+        with mock.patch.dict("os.environ", {}, clear=True):
+            with mock.patch("station.diagnostics.shutil.which", return_value="/usr/sbin/ip"):
+                with mock.patch(
+                    "station.diagnostics.subprocess.run",
+                    side_effect=subprocess.TimeoutExpired(cmd=["ip"], timeout=2),
+                ):
+                    self.assertEqual(get_local_interfaces(), [])
 
     def test_fixture_mode_uses_deterministic_network_checks(self) -> None:
         with mock.patch.dict("os.environ", {"GIPS_TEST_MODE": "1"}, clear=True):
