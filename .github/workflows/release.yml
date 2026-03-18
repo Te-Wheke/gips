@@ -1,0 +1,61 @@
+name: release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Prepare fixture GeoIP backend
+        run: |
+          mkdir -p "$RUNNER_TEMP/gips-tools"
+          cp scripts/mock-mmdblookup.sh "$RUNNER_TEMP/gips-tools/mmdblookup"
+          chmod +x "$RUNNER_TEMP/gips-tools/mmdblookup"
+          echo "$RUNNER_TEMP/gips-tools" >> "$GITHUB_PATH"
+          echo "GIP_DB_PATH=$GITHUB_WORKSPACE/tests/fixtures/GeoLite2-City.mmdb" >> "$GITHUB_ENV"
+          echo "GIPS_TEST_MODE=1" >> "$GITHUB_ENV"
+      - name: Install runtime dependencies
+        run: |
+          python -m pip install --upgrade pip build
+          python -m pip install .
+      - name: Validate source tree
+        run: ./scripts/finalize-check.sh
+      - name: Build release artifacts
+        run: ./scripts/build-release.sh
+      - name: Smoke test built wheel
+        run: |
+          python -m venv "$RUNNER_TEMP/gips-release-venv"
+          . "$RUNNER_TEMP/gips-release-venv/bin/activate"
+          python -m pip install --upgrade pip
+          python -m pip install dist/*.whl
+          gips doctor --json > "$RUNNER_TEMP/doctor.json"
+          gips version --json > "$RUNNER_TEMP/version.json"
+          python - "$RUNNER_TEMP/doctor.json" "$RUNNER_TEMP/version.json" <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+
+          doctor = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+          version = json.loads(Path(sys.argv[2]).read_text(encoding="utf-8"))
+
+          if doctor["version"] != "1.0.0":
+              raise SystemExit("doctor version mismatch")
+          if version["version"] != "1.0.0":
+              raise SystemExit("version mismatch")
+          PY
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            dist/*

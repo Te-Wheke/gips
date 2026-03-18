@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
+ENV_FILE="${GIPS_ENV_FILE:-/etc/default/gips}"
+
+if [[ -r "$ENV_FILE" ]]; then
+  set -a
+  # shellcheck disable=SC1090
+  source "$ENV_FILE"
+  set +a
+fi
+
+if [[ -n "${PYTHONPATH:-}" ]]; then
+  export PYTHONPATH="$SCRIPT_DIR:$PYTHONPATH"
+else
+  export PYTHONPATH="$SCRIPT_DIR"
+fi
+
+export GIPS_PROG_NAME="$(basename "$0")"
+exec python3 -m station.cli "$@"

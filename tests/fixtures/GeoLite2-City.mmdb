@@ -1,0 +1,4 @@
+This fixture is a readable placeholder file used with scripts/mock-mmdblookup.sh
+for GitHub Actions packaging and CLI validation. It is not a real MaxMind
+database and should never be used outside controlled test or CI environments.
+

@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gips"
+version = "1.0.0"
+description = "Linux-first recon and GeoIP operator CLI"
+readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+requires-python = ">=3.11"
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Environment :: Console",
+  "Operating System :: POSIX :: Linux",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Internet",
+  "Topic :: Security",
+]
+dependencies = [
+  "click>=8.1",
+  "rich>=13.0",
+  "prompt_toolkit>=3.0",
+]
+
+[project.scripts]
+gips = "station.cli:main"
+
+[tool.setuptools]
+packages = ["station"]
